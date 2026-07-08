@@ -1,0 +1,25 @@
+version: 0.2
+ 
+env:
+  secrets-manager:
+	JF_USER: 	petclinic/jfrog:username
+	JF_PASSWORD: petclinic/jfrog:password
+  parameter-store:
+	JFROG_URL: /petclinic/jfrog/url
+ 
+phases:
+  install:
+	commands:
+  	- curl -fL https://install-cli.jfrog.io | sh
+ 
+  pre_build:
+	commands:
+  	- jf config add petclinic
+      	--url $JFROG_URL
+      	--user $JF_USER
+      	--password $JF_PASSWORD
+      	--interactive false
+ 
+  build:
+	commands:
+  	- jf rt upload "target/*.jar" Guilene-petclinic/

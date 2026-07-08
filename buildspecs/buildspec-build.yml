@@ -1,0 +1,19 @@
+version: 0.2
+ 
+phases:
+  install:
+	runtime-versions:
+  	java: corretto21
+ 
+  build:
+	commands:
+  	- mvn -B clean package -DskipTests
+ 
+artifacts:
+  files:
+	- target/*.jar
+  discard-paths: no
+ 
+cache:
+  paths:
+	- /root/.m2/**/*

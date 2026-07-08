@@ -1,0 +1,26 @@
+version: 0.2
+ 
+phases:
+  install:
+	runtime-versions:
+  	java: corretto21
+ 
+  build:
+	commands:
+  	- mvn -B test
+ 
+reports:
+  surefire-reports:
+	files:
+  	- '**/*'
+	base-directory: target/surefire-reports
+	file-format: JUNITXML
+ 
+artifacts:
+  files:
+	- target/surefire-reports/**/*
+  discard-paths: no
+ 
+cache:
+  paths:
+	- /root/.m2/**/*
