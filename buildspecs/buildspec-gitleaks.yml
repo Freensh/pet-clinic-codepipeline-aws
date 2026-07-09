@@ -1,15 +1,11 @@
 version: 0.2
- 
+
 phases:
   install:
-	commands:
-  	- GITLEAKS_VERSION=8.18.4
-  	- curl -sSfL https://github.com/gitleaks/gitleaks/
-          releases/download/v$GITLEAKS_VERSION/
-          gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz
-      	| tar -xz -C /usr/local/bin gitleaks
- 
+    commands:
+      - GITLEAKS_VERSION=8.18.4
+      - curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz | tar -xz -C /usr/local/bin gitleaks
+
   build:
-	commands:
-  	- gitleaks detect --source . --redact
-      	--log-level warn
+    commands:
+      - gitleaks detect --source . --redact --log-level warn
