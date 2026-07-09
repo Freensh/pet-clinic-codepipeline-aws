@@ -8,7 +8,7 @@ env:
 phases:
   pre_build:
     commands:
-      - IMAGE_TAG=$(echo $CODEBUILD_BUILD_ID | cut -d: -f2)
+      - "IMAGE_TAG=$(echo $CODEBUILD_BUILD_ID | cut -d: -f2)"
 
   build:
     commands:
@@ -22,7 +22,7 @@ phases:
         done
       - |
         CRITICAL=$(aws ecr describe-image-scan-findings --repository-name $ECR_REPOSITORY --image-id imageTag=$IMAGE_TAG --query 'imageScanFindings.findingSeverityCounts.CRITICAL' --output text)
-      - echo Critical findings: $CRITICAL
+      - "echo Critical findings: $CRITICAL"
       - |
         if [ "$CRITICAL" != "None" ] && [ "$CRITICAL" != "0" ]; then
           echo CRITICAL vulnerabilities found
