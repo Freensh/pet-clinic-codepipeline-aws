@@ -1,43 +1,29 @@
 version: 0.2
- 
+
 env:
   parameter-store:
-	ECR_REPOSITORY: 	/petclinic/dev/ecr-repository
-	AWS_DEFAULT_REGION: /petclinic/dev/aws-region
- 
+    ECR_REPOSITORY: /petclinic/dev/ecr-repository
+    AWS_DEFAULT_REGION: /petclinic/dev/aws-region
+
 phases:
   pre_build:
-	commands:
-  	- AWS_ACCOUNT_ID=$(aws sts get-caller-identity
-      	--query Account --output text)
-  	- ECR_REGISTRY=$AWS_ACCOUNT_ID.dkr.ecr.
-      	$AWS_DEFAULT_REGION.amazonaws.com
-  	- aws ecr get-login-password
-      	--region $AWS_DEFAULT_REGION
-      	| docker login --username AWS
-      	--password-stdin $ECR_REGISTRY
-  	- IMAGE_TAG=$(echo $CODEBUILD_BUILD_ID
-      	| cut -d: -f2)
- 
+    commands:
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - ECR_REGISTRY=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      - IMAGE_TAG=$(echo $CODEBUILD_BUILD_ID | cut -d: -f2)
+
   build:
-	commands:
-  	- docker build -t
-          $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
- 
+    commands:
+      - docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+
   post_build:
-	commands:
-  	- docker push
-          $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-  	- docker tag
-          $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          $ECR_REGISTRY/$ECR_REPOSITORY:latest
-  	- docker push
-          $ECR_REGISTRY/$ECR_REPOSITORY:latest
-  	- printf '[{"name":"petclinic",
-          "imageUri":"%s"}]'
-          $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-      	> imagedefinitions.json
- 
+    commands:
+      - docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+      - docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+      - docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+      - printf '[{"name":"petclinic","imageUri":"%s"}]' $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG > imagedefinitions.json
+
 artifacts:
   files:
-	- imagedefinitions.json
+    - imagedefinitions.json

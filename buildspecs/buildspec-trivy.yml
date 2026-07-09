@@ -1,35 +1,26 @@
 version: 0.2
- 
+
 phases:
   install:
-	runtime-versions:
-  	java: corretto21
-	commands:
-  	- TRIVY_VERSION=0.51.4
-  	- curl -sSfL https://github.com/aquasecurity/
-          trivy/releases/download/v${TRIVY_VERSION}/
-          trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
-      	| tar -xz -C /usr/local/bin trivy
- 
+    runtime-versions:
+      java: corretto21
+    commands:
+      - TRIVY_VERSION=0.51.4
+      - curl -sSfL https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz | tar -xz -C /usr/local/bin trivy
+
   pre_build:
-	commands:
-  	- mvn -B dependency:resolve -DskipTests
-      	--no-transfer-progress
- 
+    commands:
+      - mvn -B dependency:resolve -DskipTests --no-transfer-progress
+
   build:
-	commands:
-  	- trivy fs . --severity CRITICAL,HIGH
-      	--ignore-unfixed --format table
-      	--exit-code 0
-  	- trivy fs . --severity CRITICAL,HIGH
-      	--ignore-unfixed --format json
-      	--output trivy-fs-report.json
-      	--exit-code 0
- 
+    commands:
+      - trivy fs . --severity CRITICAL,HIGH --ignore-unfixed --format table --exit-code 0
+      - trivy fs . --severity CRITICAL,HIGH --ignore-unfixed --format json --output trivy-fs-report.json --exit-code 0
+
 artifacts:
   files:
-	- trivy-fs-report.json
- 
+    - trivy-fs-report.json
+
 cache:
   paths:
-	- /root/.m2/**/*
+    - /root/.m2/**/*
