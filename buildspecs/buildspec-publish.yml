@@ -14,7 +14,7 @@ phases:
 
   pre_build:
     commands:
-      - jf config add petclinic --url $JFROG_URL --user $JF_USER --password $JF_PASSWORD --interactive false
+      - jf config add petclinic --url "$JFROG_URL" --user "$JF_USER" --password "$JF_PASSWORD" --interactive false
 
   build:
     commands:
