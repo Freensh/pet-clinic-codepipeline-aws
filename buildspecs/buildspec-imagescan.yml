@@ -1,22 +1,34 @@
-build:
-  commands:
-    - echo Waiting for Amazon Inspector scan...
-    - |
-      for i in $(seq 1 20); do
-        RESULT=$(aws ecr describe-image-scan-findings --no-paginate --repository-name $ECR_REPOSITORY --image-id imageTag=$IMAGE_TAG --query 'imageScanFindings.findingSeverityCounts' --output text 2>/dev/null)
-        if [ -n "$RESULT" ] && [ "$RESULT" != "None" ]; then
-          echo "Scan results available"
-          break
+version: 0.2
+
+env:
+  parameter-store:
+    ECR_REPOSITORY: /petclinic/dev/ecr-repository
+    AWS_DEFAULT_REGION: /petclinic/dev/aws-region
+
+phases:
+  pre_build:
+    commands:
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+
+  build:
+    commands:
+      - echo Waiting for Amazon Inspector scan...
+      - |
+        for i in $(seq 1 20); do
+          RESULT=$(aws ecr describe-image-scan-findings --no-paginate --repository-name $ECR_REPOSITORY --image-id imageTag=$IMAGE_TAG --query 'imageScanFindings.findingSeverityCounts' --output text 2>/dev/null)
+          if [ -n "$RESULT" ] && [ "$RESULT" != "None" ]; then
+            echo "Scan results available"
+            break
+          fi
+          echo "Scan results not yet available, waiting..."
+          sleep 30
+        done
+      - |
+        CRITICAL=$(aws ecr describe-image-scan-findings --no-paginate --repository-name $ECR_REPOSITORY --image-id imageTag=$IMAGE_TAG --query 'imageScanFindings.findingSeverityCounts.CRITICAL' --output text)
+      - "echo Critical findings: $CRITICAL"
+      - |
+        if [ "$CRITICAL" != "None" ] && [ "$CRITICAL" != "0" ]; then
+          echo CRITICAL vulnerabilities found
+          exit 1
         fi
-        echo "Scan results not yet available, waiting..."
-        sleep 30
-      done
-    - |
-      CRITICAL=$(aws ecr describe-image-scan-findings --no-paginate --repository-name $ECR_REPOSITORY --image-id imageTag=$IMAGE_TAG --query 'imageScanFindings.findingSeverityCounts.CRITICAL' --output text)
-    - "echo Critical findings: $CRITICAL"
-    - |
-      if [ "$CRITICAL" != "None" ] && [ "$CRITICAL" != "0" ]; then
-        echo CRITICAL vulnerabilities found
-        exit 1
-      fi
-    - echo Image scan passed.
+      - echo Image scan passed.
