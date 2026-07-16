@@ -20,7 +20,16 @@ phases:
   build:
     commands:
       - mvn -B compile -DskipTests
-      - sonar-scanner -Dsonar.scanner.skipJreProvisioning=true -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORGANIZATION -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR_TOKEN -Dsonar.java.binaries=target/classes
+      - |
+        for i in 1 2 3 4 5; do
+          echo "sonar-scanner attempt $i of 5"
+          sonar-scanner -Dsonar.scanner.skipJreProvisioning=true -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORGANIZATION -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR_TOKEN -Dsonar.java.binaries=target/classes && break
+          if [ "$i" -eq 5 ]; then
+            echo "sonar-scanner failed after 5 attempts"
+            exit 1
+          fi
+          sleep 30
+        done
 
   post_build:
     commands:
