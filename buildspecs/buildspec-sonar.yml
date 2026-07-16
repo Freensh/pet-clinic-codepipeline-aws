@@ -24,8 +24,7 @@ phases:
 
   post_build:
     commands:
-      - |
-        STATUS=$(curl -s -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY" | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
+      - STATUS=$(curl -s -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY" | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
       - "echo Quality Gate status: $STATUS"
       - |
         if [ "$STATUS" != "OK" ]; then
