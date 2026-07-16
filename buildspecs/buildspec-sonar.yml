@@ -2,37 +2,85 @@ version: 0.2
 
 env:
   secrets-manager:
-    SONAR_TOKEN: petclinic/sonar:SONAR_TOKEN
+    SONAR_TOKEN: "petclinic/sonar:SONAR_TOKEN"
+
   parameter-store:
-    SONAR_PROJECT_KEY: /petclinic/sonar/project-key
-    SONAR_ORGANIZATION: /petclinic/sonar/organization
+    SONAR_PROJECT_KEY: "/petclinic/sonar/project-key"
+    SONAR_ORGANIZATION: "/petclinic/sonar/organization"
 
 phases:
   install:
     runtime-versions:
       java: corretto21
-    commands:
-      - SONAR_VERSION=6.2.1.4610
-      - curl -sSfL https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}-linux-x64.zip -o sonar-scanner.zip
-      - unzip -q sonar-scanner.zip
-      - export PATH=$PATH:$(pwd)/sonar-scanner-${SONAR_VERSION}-linux-x64/bin
 
   build:
-    commands:
-      - mvn -B compile -DskipTests
-      - sonar-scanner -Dsonar.scanner.skipJreProvisioning=true -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORGANIZATION -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR_TOKEN -Dsonar.java.binaries=target/classes
+    # Optional: retry the BUILD phase only for transient network/server errors.
+    # Supported only by CodeBuild EC2 compute images.
+    on-failure: "RETRY-2-.*(502|503|504|Gateway Timeout|timed out).*"
 
-  post_build:
     commands:
-      - STATUS=$(curl -s -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY" | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
-      - "echo Quality Gate status: $STATUS"
       - |
-        if [ "$STATUS" != "OK" ]; then
-          echo "Quality Gate FAILED"
-          exit 1
-        fi
+        set -euo pipefail
+
+        mvn -B clean verify \
+          -DskipTests \
+          -Dsonar.projectKey="$SONAR_PROJECT_KEY" \
+          -Dsonar.organization="$SONAR_ORGANIZATION" \
+          -Dsonar.qualitygate.wait=true \
+          -Dsonar.qualitygate.timeout=600 \
+          org.sonarsource.scanner.maven:sonar-maven-plugin:5.5.0.6356:sonar
 
 cache:
   paths:
-    - /root/.m2/**/*
-    - /root/.sonar/cache/**/*
+    - "/root/.m2/**/*"
+    - "/root/.sonar/cache/**/*"
+
+
+
+
+
+
+
+
+
+
+
+
+# version: 0.2
+
+# env:
+#   secrets-manager:
+#     SONAR_TOKEN: petclinic/sonar:SONAR_TOKEN
+#   parameter-store:
+#     SONAR_PROJECT_KEY: /petclinic/sonar/project-key
+#     SONAR_ORGANIZATION: /petclinic/sonar/organization
+
+# phases:
+#   install:
+#     runtime-versions:
+#       java: corretto21
+#     commands:
+#       - SONAR_VERSION=6.2.1.4610
+#       - curl -sSfL https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}-linux-x64.zip -o sonar-scanner.zip
+#       - unzip -q sonar-scanner.zip
+#       - export PATH=$PATH:$(pwd)/sonar-scanner-${SONAR_VERSION}-linux-x64/bin
+
+#   build:
+#     commands:
+#       - mvn -B compile -DskipTests
+#       - sonar-scanner -Dsonar.scanner.skipJreProvisioning=true -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.organization=$SONAR_ORGANIZATION -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR_TOKEN -Dsonar.java.binaries=target/classes
+
+#   post_build:
+#     commands:
+#       - STATUS=$(curl -s -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY" | python3 -c "import sys,json; print(json.load(sys.stdin)['projectStatus']['status'])")
+#       - "echo Quality Gate status: $STATUS"
+#       - |
+#         if [ "$STATUS" != "OK" ]; then
+#           echo "Quality Gate FAILED"
+#           exit 1
+#         fi
+
+# cache:
+#   paths:
+#     - /root/.m2/**/*
+#     - /root/.sonar/cache/**/*
