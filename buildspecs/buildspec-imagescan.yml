@@ -8,7 +8,7 @@ env:
 phases:
   pre_build:
     commands:
-      - "IMAGE_TAG=$(echo $CODEBUILD_BUILD_ID | cut -d: -f2)"
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
 
   build:
     commands:
